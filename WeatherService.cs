@@ -94,7 +94,8 @@ namespace WeatherCockpit
             public string moon_rise { get; set; } = "";
             public string moon_set { get; set; } = "";
             public string ai_forecast { get; set; } = "";
-            public string last_refresh { get; set; } = "";   // <-- FIXED
+            public string last_refresh { get; set; } = "";
+
         }
     }
 }

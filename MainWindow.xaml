@@ -89,6 +89,60 @@
 
                 </Canvas>
 
+                <!-- TIDE BOX OVERLAY -->
+                <Canvas x:Name="TideOverlay">
+                    <!-- FIRST TIDE: TIME (above left peak) -->
+                    <TextBlock x:Name="Tide1Time"
+                        Text="{Binding HighTide}"
+                        FontSize="27"
+                        Foreground="#F8F8FF"
+                        FontWeight="Bold"
+                        Canvas.Top="605"
+                        Canvas.Left="160"
+                        Width="200"
+                        Height="200"
+                        Opacity="1"/>
+                    
+                    <!-- FIRST TIDE: HEIGHT (inside left peak) -->
+                    <TextBlock x:Name="Tide1Height"
+                       Text="{Binding HighTideTime}"
+                       FontSize="27"
+                       Foreground="#00C8FF"
+                       FontWeight="Bold"
+                       Canvas.Top="605"
+                       Canvas.Left="230">
+                        <TextBlock.RenderTransform>
+                            <TranslateTransform x:Name="Tide1HeightTransform"/>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+
+
+                    <!-- SECOND TIDE: TIME (above right peak) -->
+                    <TextBlock x:Name="Tide2Time"
+                       Text="{Binding LowTide}"
+                       FontSize="27"
+                       Foreground="White"
+                       FontWeight="Bold"
+                       Canvas.Top="660"
+                       Canvas.Left="160"
+                       Opacity="1"/>
+
+                    <!-- SECOND TIDE: HEIGHT (inside right peak) -->
+                    <TextBlock x:Name="Tide2Height"
+                       Text="{Binding LowTideTime}"
+                       FontSize="27"
+                       Foreground="#00C8FF"
+                       FontWeight="Bold"
+                       Canvas.Top="660"
+                       Canvas.Left="230"
+                       Opacity="1">
+                        <TextBlock.RenderTransform>
+                            <TranslateTransform x:Name="Tide2HeightTransform"/>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+
+                </Canvas>
+
                 <!-- Lightning Radar -->
                 <Canvas x:Name="LightningRadarLayer"/>
 
@@ -294,7 +348,7 @@
 
 
                     <!-- RAIN POTENTIAL -->
-                    <Canvas Canvas.Top="790" Canvas.Left="830">
+                    <Canvas Canvas.Top="790" Canvas.Left="840">
                         <StackPanel Spacing="2">
                             <TextBlock Text="RAIN POTENTIAL"
                                FontSize="16"
@@ -315,17 +369,18 @@
 
 
                     <!-- STORM MOVEMENT -->
-                    <Canvas Canvas.Top="680" Canvas.Left="1120">
-                        <StackPanel Spacing="4">
+                    <Canvas Canvas.Top="790" Canvas.Left="1010">
+                        <StackPanel Spacing="2">
                             <TextBlock Text="STORM MOVEMENT"
-                       FontSize="16"
-                       Foreground="White"
-                       Opacity="0.7"/>
+                               FontSize="16"
+                               Foreground="Cyan"
+                               FontWeight="Bold"
+                               Opacity="0.7"/>
 
                             <TextBlock x:Name="StormMovementValue"
-                       Text="{Binding StormMovementDisplay}"
-                       FontSize="20"
-                       Foreground="#00C8FF">
+                               Text="{Binding StormMovementDisplay}"
+                               FontSize="16"
+                               Foreground="White">    
                                 <TextBlock.RenderTransform>
                                     <TranslateTransform x:Name="StormMovementTransform"/>
                                 </TextBlock.RenderTransform>
@@ -335,19 +390,20 @@
 
 
                     <!-- ALERT LEVEL + Lightning Status -->
-                    <Canvas Canvas.Top="680" Canvas.Left="1320">
-                        <StackPanel Spacing="4">
+                    <Canvas Canvas.Top="790" Canvas.Left="1190">
+                        <StackPanel Spacing="2">
                             <TextBlock Text="ALERT LEVEL"
-                       FontSize="16"
-                       Foreground="White"
-                       Opacity="0.7"/>
+                               FontSize="16"
+                               Foreground="Cyan"
+                               FontWeight="Bold"
+                               Opacity="0.7"/>
 
                             <TextBlock x:Name="AlertLevelValue"
-                       Text="{Binding AlertLevelDisplay}"
-                       FontSize="20"
-                       Foreground="#00C8FF">
+                               Text="{Binding AlertLevelDisplay}"
+                               FontSize="16"
+                               Foreground="White">
                                 <TextBlock.RenderTransform>
-                                    <TranslateTransform x:Name="AlertLevelTransform"/>
+                            <TranslateTransform x:Name="AlertLevelTransform"/>
                                 </TextBlock.RenderTransform>
                             </TextBlock>
 
@@ -449,17 +505,17 @@
                 <!-- Scrolling Status -->
                 <Canvas x:Name="ScrollLayer">
                     <Grid x:Name="StatusBox"
-                          Width="550"
-                          Height="24"
-                          Canvas.Left="415"
-                          Canvas.Top="870"
-                          Padding="0,-3,0,0"
-                          Background="#000000">
+                          Width="606"
+                          Height="26"
+                          Canvas.Left="387"
+                          Canvas.Top="868"
+                          Padding="0,-3,0,0">
 
                         <Canvas x:Name="ScrollCanvas">
                             <TextBlock x:Name="ScrollText"
                                        Text="{Binding StatusMessage}"
-                                       FontSize="20"
+                                       FontSize="26"
+                                       Opacity="0.7"
                                        Foreground="#00C8FF"/>
                         </Canvas>
 

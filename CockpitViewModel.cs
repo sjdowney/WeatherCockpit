@@ -12,15 +12,15 @@ namespace WeatherCockpit
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         // -----------------------------
-        //  EXISTING VIEWMODEL PROPERTIES
+        //  DISPLAY PROPERTIES
         // -----------------------------
 
         public string LiveLabel { get; private set; } = "Live";
-        public string TempDisplay { get; private set; } = "";
-        public string HumidityDisplay { get; private set; } = "";
-        public string PressureDisplay { get; private set; } = "";
+        public string TempDisplay { get; private set; } = "-- °C";
+        public string HumidityDisplay { get; private set; } = "-- %";
+        public string PressureDisplay { get; private set; } = "-- hPa";
 
-        public string StormLevel { get; private set; } = "";
+        public string StormLevel { get; private set; } = "Loading...";
         public string PressureDriver { get; private set; } = "";
         public string HumidityDriver { get; private set; } = "";
         public string WindDriver { get; private set; } = "";
@@ -35,19 +35,25 @@ namespace WeatherCockpit
         public string StripPress { get; private set; } = "";
         public string StripWind { get; private set; } = "";
         public string StripRain { get; private set; } = "";
+
         public string MoonPhaseImage { get; private set; } = "";
         public string MoonPhaseText { get; private set; } = "";
         public string MoonRise { get; private set; } = "";
         public string MoonSet { get; private set; } = "";
         public string LocalForecast { get; private set; } = "";
+
         public double StormLightningDistance { get; private set; }
         public double StormLightningIntensity { get; private set; }
 
+        public string HighTideTime { get; set; } = "";
+        public double HighTide { get; set; }
+        public string LowTideTime { get; set; } = "";
+        public double LowTide { get; set; }
+
         // -----------------------------
-        //  STATUS SYSTEM (CLEAN VERSION)
+        //  STATUS SYSTEM
         // -----------------------------
 
-        // Parsed tokens (used by MainWindow.RenderTokens)
         private List<MessageToken> _statusTokens = new();
         public List<MessageToken> StatusTokens
         {
@@ -59,7 +65,6 @@ namespace WeatherCockpit
             }
         }
 
-        // Clean final text (bound to XAML)
         private string _statusMessage = "";
         public string StatusMessage
         {
@@ -80,26 +85,17 @@ namespace WeatherCockpit
 
         public CockpitViewModel()
         {
-            TempDisplay = "-- °C";
-            HumidityDisplay = "-- %";
-            PressureDisplay = "-- hPa";
-            StormLevel = "Loading...";
-
-            // Initial status
             SetStatus("OK!");
         }
 
         // -----------------------------
-        //  STATUS UPDATE ENTRY POINT
+        //  STATUS UPDATE
         // -----------------------------
 
         public void SetStatus(string raw)
         {
-            // Parse control codes → tokens
             StatusTokens = MessageParser.Parse(raw);
-            Console.WriteLine(StatusTokens.ToString());
-            // Strip codes → clean text for binding
-            //StatusMessage = MessageParser.StripCodes(raw);
+            StatusMessage = MessageParser.StripCodes(raw);
         }
 
         // -----------------------------
@@ -110,8 +106,9 @@ namespace WeatherCockpit
         {
             int stormScore = StormEngine.ComputeStormScore(d);
             var sig = StormEngine.BuildSignature(d, stormScore);
-            var forecast = ForecastEngine.BuildForecastSummary(d, stormScore);
-            var mode = ForecastEngine.GetModeLabel(stormScore, d.Rain);
+
+            ForecastSummary = ForecastEngine.BuildForecastSummary(d, stormScore);
+            ModeLabel = ForecastEngine.GetModeLabel(stormScore, d.Rain);
 
             TempDisplay = $"{d.Temp:F1} °C";
             HumidityDisplay = $"{d.Humidity:F1} %";
@@ -124,9 +121,6 @@ namespace WeatherCockpit
             InstabilityDriver = sig.InstabilityDriver;
             DpdDriver = sig.DpdDriver;
 
-            ModeLabel = mode;
-            ForecastSummary = forecast;
-
             StripTemp = d.Temp.ToString("F1");
             StripHum = d.Humidity.ToString("F1");
             StripPress = d.Pressure.ToString("F1");
@@ -138,23 +132,27 @@ namespace WeatherCockpit
             MoonPhaseText = d.MoonPhase;
             MoonRise = d.MoonRise;
             MoonSet = d.MoonSet;
-            LocalForecast = forecast;
+            LocalForecast = ForecastSummary;
 
             StormLightningDistance = d.StormLightningDistance;
-            StormLightningIntensity = d.StormLightningDistance;
+            StormLightningIntensity = d.StormLightningIntensity; // FIXED BUG
 
             var phaseKey = d.MoonPhase.ToLower().Replace(" ", "_");
             MoonPhaseImage = $"ms-appx:///Assets/Images/moon/moon_{phaseKey}.png";
 
-            OnPropertyChanged(null);
+            OnPropertyChanged(null); // refresh all bindings
         }
+
+        // -----------------------------
+        //  LIGHTNING DISPLAY
+        // -----------------------------
 
         public string LightningActivityDisplay
         {
             get
             {
-                int distance = ((int)StormLightningDistance);   // km
-                int intensity = ((int)StormLightningIntensity); // 0–255
+                int distance = (int)StormLightningDistance;
+                int intensity = (int)StormLightningIntensity;
 
                 if (intensity <= 0 || distance <= 0)
                     return "No lightning detected";
@@ -178,6 +176,5 @@ namespace WeatherCockpit
                 return $"{strength} strike ({distance} km)";
             }
         }
-
     }
 }

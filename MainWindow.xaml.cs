@@ -7,9 +7,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Threading.Tasks;
-using Windows.Devices.Printers;
 using Windows.UI;
 using Windows.UI.Text;
 
@@ -21,14 +19,14 @@ namespace WeatherCockpit
 
         public MainWindow()
         {
+            InitializeComponent();
 
-            this.InitializeComponent();
             ScrollText.Opacity = 0;
             StatusBox.Loaded += StatusBox_Loaded;
 
+            MaximizeWindow();
             Root.DataContext = ViewModel;
-
-            this.Title = "Weather Cockpit";
+            Title = "Weather Cockpit";
 
             _ = RefreshAsync();
 
@@ -38,25 +36,25 @@ namespace WeatherCockpit
             };
             timer.Tick += async (_, __) => await RefreshAsync();
             timer.Start();
+        }
 
-            
+        private void MaximizeWindow()
+        {
+            var presenter = AppWindow.Presenter as Microsoft.UI.Windowing.OverlappedPresenter;
+            presenter?.Maximize();
         }
 
         private void StatusBox_Loaded(object sender, RoutedEventArgs e)
         {
             var visual = ElementCompositionPreview.GetElementVisual(StatusBox);
-            var compositor = visual.Compositor;
+            visual.Clip = visual.Compositor.CreateInsetClip(0, 0, 0, 0);
 
-            var clip = compositor.CreateInsetClip(0, 0, 0, 0);
-            visual.Clip = clip;
-
-
-            // Start scroll AFTER layout is updated
             ScrollText.SizeChanged += (_, __) =>
             {
                 ScrollCanvas.Width = ScrollText.ActualWidth;
-                ScrollCanvas.UpdateLayout();   // ⭐ CRITICAL
+                ScrollCanvas.UpdateLayout();
                 StartScroll();
+                ScrollText.Opacity = 1;
             };
         }
 
@@ -65,34 +63,28 @@ namespace WeatherCockpit
             var canvasVisual = ElementCompositionPreview.GetElementVisual(ScrollCanvas);
             var compositor = canvasVisual.Compositor;
 
-            var animation = compositor.CreateScalarKeyFrameAnimation();
-
             float maskWidth = (float)StatusBox.ActualWidth;
             float textWidth = (float)ScrollText.ActualWidth;
 
-            float startX = maskWidth;
-            float endX = -textWidth - 20;
-
+            var animation = compositor.CreateScalarKeyFrameAnimation();
             var linear = compositor.CreateLinearEasingFunction();
 
-            animation.InsertKeyFrame(0f, startX, linear);
-            animation.InsertKeyFrame(1f, endX, linear);
-
-            animation.Duration = TimeSpan.FromSeconds(6);
+            animation.InsertKeyFrame(0f, maskWidth, linear);
+            animation.InsertKeyFrame(1f, -textWidth - 20, linear);
+            animation.Duration = TimeSpan.FromSeconds(10);
             animation.IterationBehavior = Microsoft.UI.Composition.AnimationIterationBehavior.Forever;
 
             canvasVisual.StartAnimation("Offset.X", animation);
-            ScrollText.Opacity = 1;
-
         }
 
         private async Task RefreshAsync()
         {
             var data = await WeatherService.GetLiveAsync(ViewModel);
-            var tides = await TideService.GetLiveAsync();
-            RenderTokens(ViewModel.StatusTokens);
+            await TideService.GetLiveAsync(ViewModel);
 
+            RenderTokens(ViewModel.StatusTokens);
             ViewModel.Update(data);
+
             RotateNeedle(data.WindDirectionDegrees);
         }
 
@@ -101,15 +93,14 @@ namespace WeatherCockpit
             var visual = ElementCompositionPreview.GetElementVisual(CompassNeedle);
             var compositor = visual.Compositor;
 
-            var animation = compositor.CreateScalarKeyFrameAnimation();
-            animation.InsertKeyFrame(1.0f, (float)angle);
-            animation.Duration = TimeSpan.FromMilliseconds(500);
-            animation.Target = "RotationAngleInDegrees";
-
             visual.CenterPoint = new System.Numerics.Vector3(
                 (float)CompassNeedle.Width / 2,
                 (float)CompassNeedle.Height / 2,
                 0f);
+
+            var animation = compositor.CreateScalarKeyFrameAnimation();
+            animation.InsertKeyFrame(1.0f, (float)angle);
+            animation.Duration = TimeSpan.FromMilliseconds(500);
 
             visual.StartAnimation("RotationAngleInDegrees", animation);
         }
@@ -124,8 +115,6 @@ namespace WeatherCockpit
 
             foreach (var token in tokens)
             {
-                Console.WriteLine(token.ToString());
-
                 switch (token.Type)
                 {
                     case TokenType.BoldOn:
@@ -149,23 +138,21 @@ namespace WeatherCockpit
                         break;
 
                     case TokenType.Text:
-                        var run = new Run { Text = token.Value };
-                        run.Foreground = currentBrush;
-
-                        if (bold)
-                            run.FontWeight = FontWeights.Bold;
-
-                        if (italic)
-                            run.FontStyle = FontStyle.Italic;
-
+                        var run = new Run
+                        {
+                            Text = token.Value,
+                            Foreground = currentBrush,
+                            FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
+                            FontStyle = italic ? FontStyle.Italic : FontStyle.Normal
+                        };
                         ScrollText.Inlines.Add(run);
                         break;
                 }
             }
 
-            ScrollText.UpdateLayout();   // ⭐ ensures ActualWidth is correct
+            ScrollText.UpdateLayout();
             ScrollCanvas.Width = ScrollText.ActualWidth;
-            ScrollCanvas.UpdateLayout(); // ⭐ ensures layout applies width
+            ScrollCanvas.UpdateLayout();
         }
 
         private Color ParseColor(string? value)
